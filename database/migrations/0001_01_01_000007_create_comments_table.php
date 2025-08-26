@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('content');
             $table->json('media')->nullable();
             $table->boolean('is_edited')->default(false);
+            $table->timestamp('edited_at')->nullable();
             $table->timestamps();
             
             $table->index(['post_id', 'created_at']);
