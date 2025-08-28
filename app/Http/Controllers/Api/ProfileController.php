@@ -16,6 +16,12 @@ class ProfileController extends Controller
     {
         // Return the authenticated user's profile with proper URLs
         $user = Auth::user();
+        
+        // Ensure user has a profile
+        if (!$user->profile) {
+            $user->profile()->create([]);
+        }
+        
         $auth_user_profile = $user->load('profile');
         
         // Ensure profile URLs are properly generated
@@ -74,8 +80,17 @@ class ProfileController extends Controller
             'request_data' => $request->except(['avatar', 'cover_photo'])
         ]);
         
+        // Get or create profile
+        $user = $request->user();
+        $profile = $user->profile;
+        
+        if (!$profile) {
+            \Log::info('Creating new profile for user', ['user_id' => $user->id]);
+            $profile = $user->profile()->create([]);
+        }
+        
         $validator = Validator::make($request->all(), [
-            'username' => 'nullable|string|max:255|unique:profiles,username,' . $request->user()->profile->id,
+            'username' => 'nullable|string|max:255|unique:profiles,username,' . $profile->id,
             'bio' => 'nullable|string|max:1000',
             'birth_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
@@ -98,18 +113,7 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        $profile = $request->user()->profile;
-        
-        // Check if profile exists
-        if (!$profile) {
-            \Log::error('No profile found for user', ['user_id' => $request->user()->id]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Profile not found'
-            ], 404);
-        }
-        
-        \Log::info('Profile found', ['profile_id' => $profile->id]);
+        \Log::info('Profile found/created', ['profile_id' => $profile->id]);
         $data = $request->except(['avatar', 'cover_photo']);
 
         // Convert string boolean values to actual booleans
