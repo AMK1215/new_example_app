@@ -1,0 +1,61 @@
+php artisan reverb:start --port=8081
+
+
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl status postgresql
+CREATE DATABASE social_db;
+CREATE USER social_user WITH PASSWORD 'amk_social_app';
+GRANT ALL PRIVILEGES ON DATABASE social_db TO social_user;
+ALTER USER f5j2_user WITH PASSWORD 'amk_social_app';
+
+sudo -i -u postgres
+psql -d social_db
+
+psql -h 127.0.0.1 -U social_user -d social_db
+
+GRANT ALL ON SCHEMA public TO social_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO social_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO social_user;
+
+sudo -i -u postgres
+psql -d shan
+ALTER SCHEMA public OWNER TO social_user;
+
+
+
+sudo chown -R www-data:www-data /var/www/amk_social_app/storage
+sudo chown -R www-data:www-data /var/www/amk_social_app/bootstrap/cache
+sudo chmod -R 775 /var/www/amk_social_app/storage
+sudo chmod -R 775 /var/www/amk_social_app/bootstrap/cache
+
+
+sudo systemctl restart postgresql
+
+sudo nano /etc/postgresql/16/main/pg_hba.conf
+root@gscpuls-prod:/var/www/gsc_plus# sudo nano /etc/postgresql/16/main/postgresql.conf
+
+sudo nano /etc/supervisor/conf.d/reverb-worker.conf
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl status reverb-worker
+
+
+sudo nano /etc/supervisor/conf.d/reverb-worker.conf
+sudo nano /etc/supervisor/conf.d/queue-worker.conf
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start reverb-worker:*
+sudo supervisorctl start queue-worker:*
+sudo supervisorctl status
+
+
+# Check status anytime
+sudo supervisorctl status
+
+# View logs
+sudo tail -f /var/log/supervisor/reverb-worker.log
+sudo tail -f /var/log/supervisor/queue-worker.log
+
+# Restart if needed
+sudo supervisorctl restart reverb-worker:*
+sudo supervisorctl restart queue-worker:*
