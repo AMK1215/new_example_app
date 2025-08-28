@@ -8,25 +8,27 @@ use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
     public function index(Request $request)
     {
         // Return the authenticated user's profile with proper URLs
-        $user = $request->user()->load('profile');
+        $user = Auth::user();
+        $auth_user_profile = $user->load('profile');
         
         // Ensure profile URLs are properly generated
-        if ($user->profile) {
-            $profileData = $user->profile->toArray();
-            $profileData['avatar_url'] = $user->profile->avatar_url;
-            $profileData['cover_photo_url'] = $user->profile->cover_photo_url;
-            $user->profile = $profileData;
+        if ($auth_user_profile->profile) {
+            $profileData = $auth_user_profile->profile->toArray();
+            $profileData['avatar_url'] = $auth_user_profile->profile->avatar_url;
+            $profileData['cover_photo_url'] = $auth_user_profile->profile->cover_photo_url;
+            $auth_user_profile->profile = $profileData;
         }
 
         return response()->json([
             'success' => true,
-            'data' => $user
+            'data' => $auth_user_profile
         ]);
     }
 
