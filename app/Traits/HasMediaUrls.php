@@ -41,7 +41,7 @@ trait HasMediaUrls
         $appUrl = env('APP_URL', 'http://localhost');
         
         // If APP_URL is set to production domain, use it
-        if (str_contains($appUrl, 'luckymillion.online')) {
+        if (strpos($appUrl, 'luckymillion.online') !== false) {
             return $appUrl;
         }
         
