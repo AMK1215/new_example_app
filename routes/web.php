@@ -10,6 +10,6 @@ Route::get('/', function () {
 Route::get('/login', function () {
     return response()->json([
         'success' => false,
-        'message' => 'Unauthenticated. Please login through the API.'
+        'message' => 'Unauthenticated. Please login through api/login endpoint.'
     ], 401);
 })->name('login');
