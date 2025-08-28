@@ -84,7 +84,14 @@ class ProfileController extends Controller
             if ($profile->avatar) {
                 Storage::disk('public')->delete($profile->avatar);
             }
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            
+            // Generate unique filename with timestamp to ensure latest photo is shown
+            $avatarFile = $request->file('avatar');
+            $timestamp = now()->format('Y-m-d_H-i-s');
+            $extension = $avatarFile->getClientOriginalExtension();
+            $filename = "avatar_{$profile->user_id}_{$timestamp}.{$extension}";
+            
+            $data['avatar'] = $avatarFile->storeAs('avatars', $filename, 'public');
         }
 
         // Handle cover photo upload
@@ -92,7 +99,14 @@ class ProfileController extends Controller
             if ($profile->cover_photo) {
                 Storage::disk('public')->delete($profile->cover_photo);
             }
-            $data['cover_photo'] = $request->file('cover_photo')->store('covers', 'public');
+            
+            // Generate unique filename with timestamp to ensure latest photo is shown
+            $coverFile = $request->file('cover_photo');
+            $timestamp = now()->format('Y-m-d_H-i-s');
+            $extension = $coverFile->getClientOriginalExtension();
+            $filename = "cover_{$profile->user_id}_{$timestamp}.{$extension}";
+            
+            $data['cover_photo'] = $coverFile->storeAs('covers', $filename, 'public');
         }
 
         // Handle avatar removal

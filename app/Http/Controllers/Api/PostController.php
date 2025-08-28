@@ -38,7 +38,7 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:5000',
+            'content' => 'nullable|string|max:5000',
             'type' => 'in:text,image,video,link',
             'media.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi|max:10240',
             'is_public' => 'nullable|in:0,1,true,false',
