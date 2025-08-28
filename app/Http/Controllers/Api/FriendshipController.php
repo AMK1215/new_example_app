@@ -90,8 +90,7 @@ class FriendshipController extends Controller
         ]);
 
         // Broadcast the friend request event
-        // Temporarily disabled to fix queue worker issues
-        // event(new FriendRequestReceived($friendship));
+        event(new FriendRequestReceived($friendship->load('user.profile')));
 
         return response()->json([
             'success' => true,
@@ -132,16 +131,27 @@ class FriendshipController extends Controller
                     'accepted_at' => now(),
                 ]);
                 \Log::info('Friendship updated', ['new_status' => $friendship->fresh()->status]);
+                
+                // Broadcast the friendship status change
+                event(new FriendshipStatusChanged($friendship->fresh(), 'accepted'));
+                
                 $message = 'Friend request accepted successfully';
                 break;
 
             case 'reject':
+                // Broadcast the friendship status change before deleting
+                event(new FriendshipStatusChanged($friendship, 'rejected'));
+                
                 $friendship->delete();
                 $message = 'Friend request rejected';
                 break;
 
             case 'block':
                 $friendship->update(['status' => 'blocked']);
+                
+                // Broadcast the friendship status change
+                event(new FriendshipStatusChanged($friendship->fresh(), 'blocked'));
+                
                 $message = 'User blocked successfully';
                 break;
 
