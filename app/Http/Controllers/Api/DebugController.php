@@ -40,8 +40,7 @@ class DebugController extends Controller
         }
         
         // Check post media
-        $posts = Post::whereNotNull('media')
-                    ->whereRaw("media != '[]'")
+        $posts = Post::withMedia()
                     ->limit(5)
                     ->get();
         

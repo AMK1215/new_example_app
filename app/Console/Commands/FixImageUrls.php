@@ -105,9 +105,7 @@ class FixImageUrls extends Command
     {
         $this->info('Fixing post media URLs...');
         
-        $posts = Post::whereNotNull('media')
-                    ->whereRaw("media != '[]'")
-                    ->get();
+        $posts = Post::withMedia()->get();
         
         $postCount = 0;
         

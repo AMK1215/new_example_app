@@ -89,6 +89,9 @@ if [ -f ".env" ]; then
         php artisan view:clear
         php artisan route:clear
         
+        echo "Testing database queries..."
+        php fix-database-queries.php
+        
         echo "Fixing image URLs in database..."
         php artisan fix:image-urls
     fi

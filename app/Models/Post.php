@@ -86,6 +86,16 @@ class Post extends Model
     }
     
     /**
+     * Scope to get posts with media (PostgreSQL safe)
+     */
+    public function scopeWithMedia($query)
+    {
+        return $query->whereNotNull('media')
+                    ->whereRaw("media::text != '[]'")
+                    ->whereRaw("media::text != 'null'");
+    }
+    
+    /**
      * Fix video posts that have external URLs
      */
     public static function fixVideoPosts()
