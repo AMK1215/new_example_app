@@ -13,6 +13,25 @@ class ProfileController extends Controller
 {
     public function index(Request $request)
     {
+        // Return the authenticated user's profile with proper URLs
+        $user = $request->user()->load('profile');
+        
+        // Ensure profile URLs are properly generated
+        if ($user->profile) {
+            $profileData = $user->profile->toArray();
+            $profileData['avatar_url'] = $user->profile->avatar_url;
+            $profileData['cover_photo_url'] = $user->profile->cover_photo_url;
+            $user->profile = $profileData;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
+    public function getAllUsers(Request $request)
+    {
         $users = User::with('profile')
                     ->where('id', '!=', $request->user()->id)
                     ->paginate(20);

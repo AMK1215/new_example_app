@@ -52,7 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/comments/{comment}/like', [PostController::class, 'likeComment']);
     
     // Profiles
-    Route::get('/profiles', [ProfileController::class, 'index']);
+    Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile
+    Route::get('/profiles/users', [ProfileController::class, 'getAllUsers']); // Returns all other users
     Route::get('/profiles/{user}', [ProfileController::class, 'show']);
     Route::put('/profiles', [ProfileController::class, 'update']);
     
