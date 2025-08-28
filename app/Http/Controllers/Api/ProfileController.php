@@ -148,13 +148,21 @@ class ProfileController extends Controller
 
         $profile->update($data);
 
-        // Return the updated profile (accessors will handle URL conversion)
-        $updatedProfile = $profile->fresh();
+        // Return the updated authenticated user with profile and proper URLs
+        $auth_user = Auth::user()->load('profile');
+        
+        // Ensure profile URLs are properly generated
+        if ($auth_user->profile) {
+            $profileData = $auth_user->profile->toArray();
+            $profileData['avatar_url'] = $auth_user->profile->avatar_url;
+            $profileData['cover_photo_url'] = $auth_user->profile->cover_photo_url;
+            $auth_user->profile = $profileData;
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'data' => $updatedProfile
+            'data' => $auth_user
         ]);
     }
 }
