@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasMediaUrls;
 
 class Profile extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMediaUrls;
 
     protected $fillable = [
         'user_id',
@@ -35,31 +36,11 @@ class Profile extends Model
 
     public function getAvatarUrlAttribute()
     {
-        if (!$this->avatar) {
-            return asset('images/default-avatar.png');
-        }
-        
-        // If it's already a full URL, return as is
-        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
-            return $this->avatar;
-        }
-        
-        // Convert storage path to public URL
-        return asset('storage/' . $this->avatar);
+        return $this->generateStorageUrl($this->avatar);
     }
 
     public function getCoverPhotoUrlAttribute()
     {
-        if (!$this->cover_photo) {
-            return asset('images/default-cover.jpg');
-        }
-        
-        // If it's already a full URL, return as is
-        if (filter_var($this->cover_photo, FILTER_VALIDATE_URL)) {
-            return $this->cover_photo;
-        }
-        
-        // Convert storage path to public URL
-        return asset('storage/' . $this->cover_photo);
+        return $this->generateStorageUrl($this->cover_photo);
     }
 }

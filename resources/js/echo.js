@@ -11,4 +11,5 @@ window.Echo = new Echo({
     wssPort: 443,
     forceTLS: true, // Enable forceTLS for HTTPS
     enabledTransports: ['ws', 'wss'],
+    authEndpoint: 'https://luckymillion.online/api/broadcasting/auth', // Use full HTTPS URL
 });

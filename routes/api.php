@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\DebugController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,5 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/conversations/{conversation}/typing', [MessageController::class, 'typing']);
     Route::post('/conversations/{conversation}/stop-typing', [MessageController::class, 'stopTyping']);
     Route::get('/conversations/search', [MessageController::class, 'searchConversations']);
+    
+    // Debug endpoint for checking image URLs
+    Route::get('/debug/image-urls', [DebugController::class, 'imageUrls']);
 });
 

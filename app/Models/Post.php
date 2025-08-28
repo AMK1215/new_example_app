@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasMediaUrls;
 
 class Post extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMediaUrls;
 
     protected $fillable = [
         'user_id',
@@ -71,63 +72,16 @@ class Post extends Model
     }
 
     /**
-     * Get the media URLs - now returns the stored URLs directly
+     * Get the media URLs with proper domain handling
      */
     public function getMediaUrlsAttribute()
     {
-        if (!$this->media) {
+        if (!$this->media || !is_array($this->media)) {
             return [];
         }
 
         return array_map(function ($mediaPath) {
-            // If it's already a full URL, return it directly
-            if (filter_var($mediaPath, FILTER_VALIDATE_URL)) {
-                // Check if it's a local storage URL (localhost or your domain)
-                if (strpos($mediaPath, 'localhost') !== false || 
-                    strpos($mediaPath, config('app.url')) !== false) {
-                    return $mediaPath; // Return local storage URLs
-                } else {
-                    // External URL - log warning and return as is
-                    \Log::warning("External URL detected: {$mediaPath}");
-                    return $mediaPath;
-                }
-            }
-
-            // If it's a relative path, convert to full URL
-            if (pathinfo($mediaPath, PATHINFO_EXTENSION)) {
-                return \Illuminate\Support\Facades\Storage::disk('public')->url($mediaPath);
-            }
-
-            // If no extension, try to find the actual file with extensions
-            $storage = \Illuminate\Support\Facades\Storage::disk('public');
-            $directory = dirname($mediaPath);
-            $filename = basename($mediaPath);
-            
-            // Common media extensions to try (images + videos)
-            $extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'];
-            
-            // For video posts, prioritize video extensions
-            if ($this->type === 'video') {
-                $videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'];
-                $extensions = array_merge($videoExtensions, array_diff($extensions, $videoExtensions));
-            }
-            
-            foreach ($extensions as $ext) {
-                $fullPath = $directory . '/' . $filename . '.' . $ext;
-                if ($storage->exists($fullPath)) {
-                    \Log::info("Found local file: {$fullPath} for media path: {$mediaPath}");
-                    return $storage->url($fullPath);
-                }
-            }
-            
-            // If no file found, return the original path (this will help with debugging)
-            \Log::warning("Could not find media file for path: {$mediaPath}");
-            
-            // Try to construct a URL anyway for debugging
-            $constructedUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($mediaPath);
-            \Log::warning("Constructed URL: {$constructedUrl}");
-            
-            return $constructedUrl;
+            return $this->generateStorageUrl($mediaPath);
         }, $this->media);
     }
     
