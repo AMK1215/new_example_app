@@ -23,7 +23,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
         if ($user->profile && $user->profile->is_private) {
             // Check if they are friends
@@ -59,8 +59,8 @@ class ProfileController extends Controller
             'social_links.instagram' => 'nullable|url',
             'social_links.linkedin' => 'nullable|url',
             'is_private' => 'nullable|in:0,1,true,false',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:8048',
+            'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:9120',
         ]);
 
         if ($validator->fails()) {
