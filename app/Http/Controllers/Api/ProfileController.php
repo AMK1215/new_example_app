@@ -66,7 +66,13 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-
+        // Debug logging
+        \Log::info('Profile update request received', [
+            'user_id' => $request->user()->id,
+            'has_avatar' => $request->hasFile('avatar'),
+            'has_cover' => $request->hasFile('cover_photo'),
+            'request_data' => $request->except(['avatar', 'cover_photo'])
+        ]);
         
         $validator = Validator::make($request->all(), [
             'username' => 'nullable|string|max:255|unique:profiles,username,' . $request->user()->profile->id,
@@ -93,6 +99,17 @@ class ProfileController extends Controller
         }
 
         $profile = $request->user()->profile;
+        
+        // Check if profile exists
+        if (!$profile) {
+            \Log::error('No profile found for user', ['user_id' => $request->user()->id]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Profile not found'
+            ], 404);
+        }
+        
+        \Log::info('Profile found', ['profile_id' => $profile->id]);
         $data = $request->except(['avatar', 'cover_photo']);
 
         // Convert string boolean values to actual booleans
@@ -102,8 +119,10 @@ class ProfileController extends Controller
 
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
+            \Log::info('Processing avatar upload');
             if ($profile->avatar) {
                 Storage::disk('public')->delete($profile->avatar);
+                \Log::info('Deleted old avatar', ['old_avatar' => $profile->avatar]);
             }
             
             // Generate unique filename with timestamp to ensure latest photo is shown
@@ -112,13 +131,22 @@ class ProfileController extends Controller
             $extension = $avatarFile->getClientOriginalExtension();
             $filename = "avatar_{$profile->user_id}_{$timestamp}.{$extension}";
             
-            $data['avatar'] = $avatarFile->storeAs('avatars', $filename, 'public');
+            $storedPath = $avatarFile->storeAs('avatars', $filename, 'public');
+            $data['avatar'] = $storedPath;
+            
+            \Log::info('Avatar stored', [
+                'filename' => $filename,
+                'stored_path' => $storedPath,
+                'full_path' => storage_path('app/public/' . $storedPath)
+            ]);
         }
 
         // Handle cover photo upload
         if ($request->hasFile('cover_photo')) {
+            \Log::info('Processing cover photo upload');
             if ($profile->cover_photo) {
                 Storage::disk('public')->delete($profile->cover_photo);
+                \Log::info('Deleted old cover photo', ['old_cover' => $profile->cover_photo]);
             }
             
             // Generate unique filename with timestamp to ensure latest photo is shown
@@ -127,7 +155,14 @@ class ProfileController extends Controller
             $extension = $coverFile->getClientOriginalExtension();
             $filename = "cover_{$profile->user_id}_{$timestamp}.{$extension}";
             
-            $data['cover_photo'] = $coverFile->storeAs('covers', $filename, 'public');
+            $storedPath = $coverFile->storeAs('covers', $filename, 'public');
+            $data['cover_photo'] = $storedPath;
+            
+            \Log::info('Cover photo stored', [
+                'filename' => $filename,
+                'stored_path' => $storedPath,
+                'full_path' => storage_path('app/public/' . $storedPath)
+            ]);
         }
 
         // Handle avatar removal
@@ -146,7 +181,9 @@ class ProfileController extends Controller
             $data['cover_photo'] = null;
         }
 
+        \Log::info('Updating profile with data', ['data' => $data]);
         $profile->update($data);
+        \Log::info('Profile updated successfully', ['profile_id' => $profile->id]);
 
         // Return the updated authenticated user with profile and proper URLs
         $auth_user = Auth::user()->load('profile');
