@@ -11,10 +11,6 @@ use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
     public function index(Request $request)
     {
         $users = User::with('profile')
