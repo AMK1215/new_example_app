@@ -21,17 +21,28 @@ class MessageController extends Controller
             $user = $request->user();
             
             $conversations = $user->conversations()
-                                 ->with(['users.profile', 'lastMessage.user', 'messages' => function($query) {
-                                     $query->latest()->limit(1);
-                                 }])
+                                 ->with([
+                                     'users.profile', 
+                                     'lastMessage.user.profile',
+                                     'messages' => function($query) {
+                                         $query->latest()->limit(1)->with('user.profile');
+                                     }
+                                 ])
                                  ->withPivot('last_read_at', 'is_muted')
                                  ->orderBy('updated_at', 'desc')
                                  ->get();
 
-            // Add unread count for each conversation
+            // Add unread count and ensure latest message for each conversation
             $conversations->each(function($conversation) use ($user) {
                 try {
                     $conversation->unread_count = $conversation->unreadCountForUser($user->id);
+                    
+                    // Ensure we have a latest message - fallback to messages collection if lastMessage is null
+                    if (!$conversation->lastMessage && $conversation->messages && $conversation->messages->count() > 0) {
+                        $conversation->latest_message = $conversation->messages->first();
+                    } else if ($conversation->lastMessage) {
+                        $conversation->latest_message = $conversation->lastMessage;
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Error calculating unread count: ' . $e->getMessage());
                     $conversation->unread_count = 0;
