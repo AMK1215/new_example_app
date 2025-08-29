@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Friendship;
 use App\Events\FriendRequestReceived;
+use App\Events\FriendshipStatusChanged;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 

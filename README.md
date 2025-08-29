@@ -1,61 +1,171 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AMKSocial - Social Media Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern, full-featured social media application built with Laravel 12 and React 19, featuring real-time chat, posts, friendships, and media sharing.
 
-## About Laravel
+## 🌟 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Core Social Features
+- **User Authentication** - Secure registration and login with JWT tokens
+- **User Profiles** - Customizable profiles with avatars and cover photos
+- **Posts & Media** - Create text, image, and video posts with rich media support
+- **Like & Comment System** - Interactive engagement with nested comments
+- **Friend System** - Send/accept friend requests with smart suggestions
+- **Real-time Chat** - Private messaging and group conversations
+- **Live Notifications** - Instant updates for all social interactions
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Technical Features
+- **Real-time Updates** - WebSocket integration with Laravel Reverb
+- **Responsive Design** - Mobile-first design with Tailwind CSS
+- **File Upload** - Secure media handling with Laravel Storage
+- **API-First** - RESTful API with comprehensive endpoints
+- **Modern Stack** - Latest Laravel 12 and React 19
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🏗️ Architecture
 
-## Learning Laravel
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React App     │    │  Laravel API    │    │   Database      │
+│                 │    │                 │    │                 │
+│ • Components    │◄──►│ • Controllers   │◄──►│ • Users         │
+│ • Hooks         │    │ • Models        │    │ • Posts         │
+│ • Context       │    │ • Events        │    │ • Messages      │
+│ • Services      │    │ • Broadcasting  │    │ • Friendships   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲
+         │                       │
+         └───────────────────────┘
+              WebSocket (Reverb)
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🚀 Quick Start
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Prerequisites
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- npm/yarn
+- Database (MySQL/PostgreSQL/SQLite)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Backend Setup (Laravel)
 
-## Laravel Sponsors
+1. **Clone and Install Dependencies**
+   ```bash
+   git clone <repository-url>
+   cd new_example_app
+   composer install
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2. **Environment Configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-### Premium Partners
+3. **Configure Database**
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=amksocial
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+4. **Configure Broadcasting (Reverb)**
+   ```env
+   BROADCAST_CONNECTION=reverb
+   REVERB_APP_ID=your_app_id
+   REVERB_APP_KEY=your_app_key
+   REVERB_APP_SECRET=your_app_secret
+   REVERB_HOST=localhost
+   REVERB_PORT=8080
+   REVERB_SCHEME=http
+   ```
 
-## Contributing
+5. **Run Migrations and Seeders**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+6. **Start Laravel Services**
+   ```bash
+   # Terminal 1: Web server
+   php artisan serve
+   
+   # Terminal 2: Queue worker
+   php artisan queue:work
+   
+   # Terminal 3: WebSocket server
+   php artisan reverb:start
+   ```
 
-## Code of Conduct
+### Frontend Setup (React)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. **Navigate to React Directory**
+   ```bash
+   cd social_react
+   ```
 
-## Security Vulnerabilities
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+3. **Configure API Endpoint**
+   ```javascript
+   // src/services/api.js
+   export const api = axios.create({
+     baseURL: 'http://localhost:8000/api', // Update for your setup
+   });
+   ```
 
-## License
+4. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Access the Application
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **WebSocket**: ws://localhost:8080
+
+## 📖 Documentation
+
+- [API Documentation](docs/API.md) - Complete API reference
+- [Frontend Guide](docs/FRONTEND.md) - React components and hooks
+- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment
+- [Development Guide](docs/DEVELOPMENT.md) - Contributing and development workflow
+
+## 🛠️ Tech Stack
+
+**Backend**
+- Laravel 12 (PHP 8.2+)
+- Laravel Sanctum (Authentication)
+- Laravel Reverb (WebSockets)
+- Eloquent ORM
+- Laravel Storage (File handling)
+
+**Frontend**
+- React 19
+- Vite (Build tool)
+- React Router v6 (Routing)
+- TanStack Query (State management)
+- Tailwind CSS v4 (Styling)
+- Laravel Echo (WebSocket client)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+Made with ❤️ by the AMKSocial Team
