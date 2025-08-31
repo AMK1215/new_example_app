@@ -23,7 +23,7 @@ return new class extends Migration
             // Indexes
             $table->index(['user_id', 'created_at']);
             $table->index(['post_id', 'created_at']);
-            $table->unique(['user_id', 'post_id', 'share_type']); // Prevent duplicate shares of same type
+            // Note: No unique constraint here to allow multiple timeline shares
         });
     }
 

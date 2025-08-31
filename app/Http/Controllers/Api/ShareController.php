@@ -38,17 +38,20 @@ class ShareController extends Controller
             ], 404);
         }
 
-        // Check if user has already shared this post with the same type
-        $existingShare = Share::where('user_id', $request->user()->id)
-                              ->where('post_id', $post->id)
-                              ->where('share_type', $request->share_type)
-                              ->first();
+        // For timeline shares, allow multiple shares (like Facebook)
+        // For other types, check for duplicates
+        if ($request->share_type !== 'timeline') {
+            $existingShare = Share::where('user_id', $request->user()->id)
+                                  ->where('post_id', $post->id)
+                                  ->where('share_type', $request->share_type)
+                                  ->first();
 
-        if ($existingShare) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You have already shared this post'
-            ], 409);
+            if ($existingShare) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You have already shared this post'
+                ], 409);
+            }
         }
 
         // Create the share
@@ -65,7 +68,7 @@ class ShareController extends Controller
         if ($request->share_type === 'timeline') {
             $timelinePost = Post::create([
                 'user_id' => $request->user()->id,
-                'content' => $request->content, // User's comment when sharing
+                'content' => $request->content ?: '', // Empty string if no content provided
                 'type' => 'shared',
                 'is_public' => $request->privacy === 'public',
                 'is_shared' => true,
