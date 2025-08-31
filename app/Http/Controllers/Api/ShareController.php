@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Share;
 use App\Events\PostShared;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -82,6 +83,10 @@ class ShareController extends Controller
 
         // Load the share with relationships
         $shareData = $share->load(['user.profile', 'post.user.profile']);
+
+        // Create notification for post owner
+        $notificationService = app(NotificationService::class);
+        $notificationService->postShare($post, $request->user()->id);
 
         // Broadcast the share event (for real-time updates)
         broadcast(new PostShared($shareData))->toOthers();

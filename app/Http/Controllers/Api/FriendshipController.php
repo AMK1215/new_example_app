@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Friendship;
 use App\Events\FriendRequestReceived;
 use App\Events\FriendshipStatusChanged;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -90,6 +91,10 @@ class FriendshipController extends Controller
             'status' => 'pending',
         ]);
 
+        // Create notification for friend request receiver
+        $notificationService = app(NotificationService::class);
+        $notificationService->friendRequest($user->id, $request->user()->id);
+
         // Broadcast the friend request event
         event(new FriendRequestReceived($friendship->load('user.profile')));
 
@@ -132,6 +137,10 @@ class FriendshipController extends Controller
                     'accepted_at' => now(),
                 ]);
                 \Log::info('Friendship updated', ['new_status' => $friendship->fresh()->status]);
+                
+                // Create notification for friend request sender
+                $notificationService = app(NotificationService::class);
+                $notificationService->friendAccepted($friendship->user_id, $request->user()->id);
                 
                 // Broadcast the friendship status change
                 event(new FriendshipStatusChanged($friendship->fresh(), 'accepted'));

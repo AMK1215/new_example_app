@@ -8,6 +8,7 @@ use App\Models\Like;
 use App\Models\Comment;
 use App\Events\CommentCreated;
 use App\Events\CommentDeleted;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -230,6 +231,10 @@ class PostController extends Controller
                 'type' => $request->type ?? 'like',
             ]);
             $message = 'Post liked';
+            
+            // Create notification for post owner
+            $notificationService = app(NotificationService::class);
+            $notificationService->postLike($post, $request->user()->id);
         }
 
         return response()->json([
@@ -416,6 +421,10 @@ class PostController extends Controller
 
         $comment->load(['user.profile', 'likes']);
 
+        // Create notification for post owner
+        $notificationService = app(NotificationService::class);
+        $notificationService->postComment($post, $comment, $request->user()->id);
+
         // Broadcast the comment creation event
         event(new CommentCreated($comment));
 
@@ -518,6 +527,10 @@ class PostController extends Controller
                 'type' => $request->type ?? 'like',
             ]);
             $message = 'Comment liked';
+            
+            // Create notification for comment owner
+            $notificationService = app(NotificationService::class);
+            $notificationService->commentLike($comment, $request->user()->id);
         }
 
         return response()->json([
