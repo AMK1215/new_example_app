@@ -23,9 +23,9 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for performance
-            $table->index(['user_id', 'read']);
-            $table->index(['user_id', 'created_at']);
-            $table->index(['notifiable_type', 'notifiable_id']);
+            $table->index(['user_id', 'read'], 'notifications_user_read_idx');
+            $table->index(['user_id', 'created_at'], 'notifications_user_created_idx');
+            $table->index(['notifiable_type', 'notifiable_id'], 'notifications_notifiable_idx');
         });
     }
 
