@@ -65,7 +65,7 @@ class SearchController extends Controller
         if ($type === 'all' || $type === 'posts') {
             $posts = Post::with(['user.profile', 'likes', 'comments'])
                 ->where('content', 'ILIKE', "%{$query}%")
-                ->where('privacy', 'public') // Only search public posts
+                ->where('is_public', true) // Only search public posts
                 ->where('is_shared', false) // Exclude shared posts for cleaner results
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
@@ -158,7 +158,7 @@ class SearchController extends Controller
 
         $posts = Post::with(['user.profile', 'likes', 'comments'])
             ->where('content', 'ILIKE', "%{$query}%")
-            ->where('privacy', 'public')
+            ->where('is_public', true)
             ->where('is_shared', false)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
