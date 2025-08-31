@@ -70,6 +70,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/notifications/delete-all-read', [NotificationController::class, 'deleteAllRead']);
     
+    // Search
+    Route::get('/search', [App\Http\Controllers\Api\SearchController::class, 'globalSearch']);
+    Route::get('/search/users', [App\Http\Controllers\Api\SearchController::class, 'searchUsers']);
+    Route::get('/search/posts', [App\Http\Controllers\Api\SearchController::class, 'searchPosts']);
+    Route::get('/search/suggestions', [App\Http\Controllers\Api\SearchController::class, 'suggestions']);
+    
     // Profiles
     Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile
     Route::get('/profiles/users', [ProfileController::class, 'getAllUsers']); // Returns all other users
