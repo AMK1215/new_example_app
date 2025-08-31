@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts/fix-videos', [PostController::class, 'fixVideoPosts']);
     Route::post('/posts/clean-external-urls', [PostController::class, 'cleanExternalUrls']);
     Route::post('/posts/convert-to-full-urls', [PostController::class, 'convertToFullUrls']);
+    Route::get('/posts/debug-shared', [PostController::class, 'debugSharedPosts']);
     
     // Comments
     Route::get('/posts/{post}/comments', [PostController::class, 'comments']);

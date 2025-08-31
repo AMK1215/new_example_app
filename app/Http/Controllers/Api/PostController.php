@@ -245,10 +245,32 @@ class PostController extends Controller
             if ($post->media) {
                 $post->media = $post->media_urls;
             }
+            
+            // Force load sharedPost relationship if missing
+            if ($post->is_shared && !$post->relationLoaded('sharedPost')) {
+                $post->load(['sharedPost.user.profile', 'sharedPost.likes', 'sharedPost.comments']);
+            }
+            
             // Handle shared post media
             if ($post->is_shared && $post->sharedPost && $post->sharedPost->media) {
                 $post->sharedPost->media = $post->sharedPost->media_urls;
             }
+            
+            // Debug logging for shared posts
+            if ($post->is_shared) {
+                \Log::info('Shared post debug in userPosts', [
+                    'post_id' => $post->id,
+                    'shared_post_id' => $post->shared_post_id,
+                    'has_shared_post_relation' => $post->relationLoaded('sharedPost'),
+                    'shared_post_exists' => $post->sharedPost ? 'yes' : 'no',
+                    'shared_post_data' => $post->sharedPost ? [
+                        'id' => $post->sharedPost->id,
+                        'content' => $post->sharedPost->content,
+                        'media_count' => $post->sharedPost->media ? count($post->sharedPost->media) : 0
+                    ] : null
+                ]);
+            }
+            
             return $post;
         });
 
@@ -297,6 +319,33 @@ class PostController extends Controller
             'success' => true,
             'message' => "Converted {$convertedCount} post(s) to use full URLs",
             'data' => ['converted_count' => $convertedCount]
+        ]);
+    }
+
+    /**
+     * Debug shared posts
+     */
+    public function debugSharedPosts(Request $request)
+    {
+        $sharedPosts = Post::where('is_shared', true)
+                          ->with(['sharedPost', 'user.profile'])
+                          ->get();
+        
+        $debug = [];
+        foreach ($sharedPosts as $post) {
+            $debug[] = [
+                'id' => $post->id,
+                'shared_post_id' => $post->shared_post_id,
+                'has_shared_post' => $post->sharedPost ? true : false,
+                'shared_post_content' => $post->sharedPost ? $post->sharedPost->content : null,
+                'shared_by' => $post->user->name ?? 'Unknown'
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'shared_posts_count' => count($sharedPosts),
+            'debug_data' => $debug
         ]);
     }
 
