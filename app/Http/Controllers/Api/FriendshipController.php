@@ -379,11 +379,55 @@ class FriendshipController extends Controller
     {
         $user = $request->user();
         
+        \Log::info('Fetching pending requests', [
+            'user_id' => $user->id,
+            'user_name' => $user->name
+        ]);
+        
         // Get pending friend requests received by the user
         $pendingRequests = Friendship::where('friend_id', $user->id)
                                    ->where('status', 'pending')
                                    ->with('user.profile')
                                    ->get();
+
+        \Log::info('Pending requests query result', [
+            'user_id' => $user->id,
+            'count' => $pendingRequests->count(),
+            'requests' => $pendingRequests->map(function($req) {
+                return [
+                    'id' => $req->id,
+                    'user_id' => $req->user_id,
+                    'friend_id' => $req->friend_id,
+                    'status' => $req->status,
+                    'sender_name' => $req->user->name ?? 'Unknown',
+                    'created_at' => $req->created_at
+                ];
+            })
+        ]);
+
+        // Also check ALL friendships involving this user for debugging
+        $allUserFriendships = Friendship::where('user_id', $user->id)
+                                      ->orWhere('friend_id', $user->id)
+                                      ->with('user.profile', 'friend.profile')
+                                      ->get();
+        
+        \Log::info('All friendships for user debug', [
+            'user_id' => $user->id,
+            'total_friendships' => $allUserFriendships->count(),
+            'friendships' => $allUserFriendships->map(function($friendship) use ($user) {
+                return [
+                    'id' => $friendship->id,
+                    'user_id' => $friendship->user_id,
+                    'friend_id' => $friendship->friend_id,
+                    'status' => $friendship->status,
+                    'direction' => $friendship->user_id === $user->id ? 'sent' : 'received',
+                    'other_user' => $friendship->user_id === $user->id 
+                        ? ($friendship->friend->name ?? 'Unknown')
+                        : ($friendship->user->name ?? 'Unknown'),
+                    'created_at' => $friendship->created_at
+                ];
+            })
+        ]);
 
         return response()->json([
             'success' => true,
