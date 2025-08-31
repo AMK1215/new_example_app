@@ -81,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/debug/cleanup-friendships', [App\Http\Controllers\Api\DebugController::class, 'cleanupFriendships']);
     Route::post('/debug/test-friendship/{targetUserId}', [App\Http\Controllers\Api\DebugController::class, 'testCreateFriendship']);
     Route::get('/debug/pending-requests', [App\Http\Controllers\Api\DebugController::class, 'debugPendingRequests']);
+    Route::get('/debug/users-1-and-2', [App\Http\Controllers\Api\DebugController::class, 'checkUsers1And2']);
     
     // Profiles
     Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile

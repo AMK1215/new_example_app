@@ -177,4 +177,69 @@ class DebugController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Check specific friendship between users 1 and 2
+     */
+    public function checkUsers1And2()
+    {
+        // Get all friendships between users 1 and 2
+        $friendships = Friendship::where(function($query) {
+            $query->where('user_id', 1)->where('friend_id', 2);
+        })->orWhere(function($query) {
+            $query->where('user_id', 2)->where('friend_id', 1);
+        })->with('user', 'friend')->get();
+
+        // Get pending requests TO user 1
+        $pendingToUser1 = Friendship::where('friend_id', 1)
+                                   ->where('status', 'pending')
+                                   ->with('user')
+                                   ->get();
+
+        // Get pending requests FROM user 2
+        $pendingFromUser2 = Friendship::where('user_id', 2)
+                                     ->where('status', 'pending')
+                                     ->with('friend')
+                                     ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Checking friendship between users 1 and 2',
+            'data' => [
+                'all_friendships_1_and_2' => $friendships->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'user_id' => $f->user_id,
+                        'friend_id' => $f->friend_id,
+                        'status' => $f->status,
+                        'user_name' => $f->user->name ?? 'Unknown',
+                        'friend_name' => $f->friend->name ?? 'Unknown',
+                        'direction' => $f->user_id === 2 ? 'User 2 → User 1' : 'User 1 → User 2',
+                        'created_at' => $f->created_at,
+                        'updated_at' => $f->updated_at
+                    ];
+                }),
+                'pending_to_user_1_count' => $pendingToUser1->count(),
+                'pending_to_user_1' => $pendingToUser1->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'from_user_id' => $f->user_id,
+                        'from_user_name' => $f->user->name ?? 'Unknown',
+                        'status' => $f->status,
+                        'created_at' => $f->created_at
+                    ];
+                }),
+                'pending_from_user_2_count' => $pendingFromUser2->count(),
+                'pending_from_user_2' => $pendingFromUser2->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'to_user_id' => $f->friend_id,
+                        'to_user_name' => $f->friend->name ?? 'Unknown',
+                        'status' => $f->status,
+                        'created_at' => $f->created_at
+                    ];
+                })
+            ]
+        ]);
+    }
 }
