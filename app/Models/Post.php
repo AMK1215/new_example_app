@@ -46,6 +46,11 @@ class Post extends Model
         return $this->hasMany(Comment::class);
     }
 
+    public function shares()
+    {
+        return $this->hasMany(Share::class);
+    }
+
     public function isLikedBy($userId)
     {
         return $this->likes()->where('user_id', $userId)->exists();
@@ -59,6 +64,11 @@ class Post extends Model
     public function getCommentCountAttribute()
     {
         return $this->allComments()->count();
+    }
+
+    public function getShareCountAttribute()
+    {
+        return $this->shares()->count();
     }
 
     public function scopePublic($query)

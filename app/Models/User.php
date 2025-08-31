@@ -68,6 +68,11 @@ class User extends Authenticatable
         return $this->hasMany(Comment::class);
     }
 
+    public function shares()
+    {
+        return $this->hasMany(Share::class);
+    }
+
     public function friendships()
     {
         return $this->hasMany(Friendship::class);

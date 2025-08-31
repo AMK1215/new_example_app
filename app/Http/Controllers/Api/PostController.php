@@ -16,7 +16,7 @@ class PostController extends Controller
 {
     public function index(Request $request)
     {
-        $posts = Post::with(['user.profile', 'likes', 'comments.user.profile'])
+        $posts = Post::with(['user.profile', 'likes', 'comments.user.profile', 'shares.user.profile'])
                     ->public()
                     ->latest()
                     ->paginate(10);

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ShareController;
 use App\Http\Controllers\Api\DebugController;
 
 /*
@@ -50,6 +51,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/comments/{comment}', [PostController::class, 'updateComment']);
     Route::delete('/comments/{comment}', [PostController::class, 'deleteComment']);
     Route::post('/comments/{comment}/like', [PostController::class, 'likeComment']);
+    
+    // Shares
+    Route::post('/posts/{post}/share', [ShareController::class, 'sharePost']);
+    Route::delete('/posts/{post}/unshare', [ShareController::class, 'unsharePost']);
+    Route::get('/posts/{post}/shares', [ShareController::class, 'getPostShares']);
+    Route::get('/posts/{post}/share-stats', [ShareController::class, 'getShareStats']);
+    Route::post('/posts/{post}/copy-link', [ShareController::class, 'copyLink']);
+    Route::get('/my-shares', [ShareController::class, 'getUserShares']);
     
     // Profiles
     Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile
