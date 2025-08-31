@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\ShareController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DebugController;
 
 /*
@@ -60,6 +61,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/posts/{post}/share-stats', [ShareController::class, 'getShareStats']);
     Route::post('/posts/{post}/copy-link', [ShareController::class, 'copyLink']);
     Route::get('/my-shares', [ShareController::class, 'getUserShares']);
+
+    // Notifications
+    Route::apiResource('notifications', NotificationController::class)->only(['index', 'destroy']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/{notification}/mark-unread', [NotificationController::class, 'markAsUnread']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/delete-all-read', [NotificationController::class, 'deleteAllRead']);
     
     // Profiles
     Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile
