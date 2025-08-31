@@ -28,19 +28,51 @@ class NotificationService
             return new Notification(); // Return empty notification
         }
 
-        $notification = Notification::create([
-            'type' => $type,
-            'user_id' => $userId,
-            'sender_id' => $senderId,
-            'notifiable_type' => $notifiable ? get_class($notifiable) : null,
-            'notifiable_id' => $notifiable?->id,
-            'data' => $data,
-        ]);
+        try {
+            $notification = Notification::create([
+                'type' => $type,
+                'user_id' => $userId,
+                'sender_id' => $senderId,
+                'notifiable_type' => $notifiable ? get_class($notifiable) : null,
+                'notifiable_id' => $notifiable?->id,
+                'data' => $data,
+            ]);
 
-        // Broadcast real-time notification
-        broadcast(new NotificationSent($notification))->toOthers();
+            \Log::info('Notification created in database', [
+                'type' => $type,
+                'notification_id' => $notification->id,
+                'user_id' => $userId,
+                'sender_id' => $senderId
+            ]);
 
-        return $notification;
+            // Broadcast real-time notification with error handling
+            try {
+                broadcast(new NotificationSent($notification))->toOthers();
+                \Log::info('Notification broadcast successful');
+            } catch (\Exception $broadcastError) {
+                \Log::error('Notification broadcast failed', [
+                    'error' => $broadcastError->getMessage()
+                ]);
+                // Don't fail the whole operation if broadcast fails
+            }
+
+            return $notification;
+            
+        } catch (\Exception $e) {
+            \Log::error('Notification database creation failed', [
+                'error' => $e->getMessage(),
+                'type' => $type,
+                'user_id' => $userId,
+                'sender_id' => $senderId
+            ]);
+            
+            // Return an empty notification instead of crashing
+            $emptyNotification = new Notification();
+            $emptyNotification->type = $type;
+            $emptyNotification->user_id = $userId;
+            $emptyNotification->sender_id = $senderId;
+            return $emptyNotification;
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Events\FriendshipStatusChanged;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class FriendshipController extends Controller
 {
@@ -54,7 +55,7 @@ class FriendshipController extends Controller
             ], 400);
         }
 
-        // Check if friendship already exists
+        // Check if friendship already exists - IMPROVED DUPLICATE DETECTION
         $existingFriendship = Friendship::where(function($query) use ($request, $user) {
             $query->where('user_id', $request->user()->id)
                   ->where('friend_id', $user->id);
@@ -64,8 +65,21 @@ class FriendshipController extends Controller
         })->first();
 
         \Log::info('Existing friendship check', [
-            'existing_friendship' => $existingFriendship ? $existingFriendship->toArray() : null
+            'current_user_id' => $request->user()->id,
+            'target_user_id' => $user->id,
+            'existing_friendship' => $existingFriendship ? $existingFriendship->toArray() : null,
+            'found_existing' => $existingFriendship ? 'YES' : 'NO'
         ]);
+
+        // If we find ANY existing friendship, handle it appropriately
+        if ($existingFriendship) {
+            \Log::info('Found existing friendship', [
+                'friendship_id' => $existingFriendship->id,
+                'status' => $existingFriendship->status,
+                'user_id' => $existingFriendship->user_id,
+                'friend_id' => $existingFriendship->friend_id
+            ]);
+        }
 
         if ($existingFriendship) {
             if ($existingFriendship->status === 'accepted') {
@@ -93,14 +107,38 @@ class FriendshipController extends Controller
             }
         }
 
+        // Use database transaction to ensure data consistency
+        \DB::beginTransaction();
+        
         try {
+            // Double-check for existing friendship within transaction
+            $doubleCheckFriendship = Friendship::where(function($query) use ($request, $user) {
+                $query->where('user_id', $request->user()->id)
+                      ->where('friend_id', $user->id);
+            })->orWhere(function($query) use ($request, $user) {
+                $query->where('user_id', $user->id)
+                      ->where('friend_id', $request->user()->id);
+            })->lockForUpdate()->first();
+
+            if ($doubleCheckFriendship) {
+                \Log::warning('Race condition detected - friendship exists in transaction', [
+                    'friendship_id' => $doubleCheckFriendship->id,
+                    'status' => $doubleCheckFriendship->status
+                ]);
+                \DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Friend request already sent'
+                ], 400);
+            }
+
             // Create new friendship request
             $friendship = Friendship::create([
                 'user_id' => $request->user()->id,
                 'friend_id' => $user->id,
                 'status' => 'pending',
             ]);
-            \Log::info('Friendship created', ['friendship_id' => $friendship->id]);
+            \Log::info('Friendship created in transaction', ['friendship_id' => $friendship->id]);
 
             // Create notification for friend request receiver - WITH PROPER ERROR HANDLING
             try {
@@ -129,7 +167,13 @@ class FriendshipController extends Controller
             
             \Log::info('Friendship request completed successfully with notifications');
             
+            // Commit the transaction
+            \DB::commit();
+            
         } catch (\Exception $e) {
+            // Rollback the transaction on any error
+            \DB::rollBack();
+            
             \Log::error('Error creating friendship request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
