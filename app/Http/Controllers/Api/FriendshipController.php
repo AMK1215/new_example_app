@@ -102,36 +102,32 @@ class FriendshipController extends Controller
             ]);
             \Log::info('Friendship created', ['friendship_id' => $friendship->id]);
 
-            // TEMPORARILY DISABLED - Notification system causing 500 errors
-            // TODO: Re-enable after fixing notification issues
-            /*
-            // Create notification for friend request receiver
+            // Create notification for friend request receiver - WITH PROPER ERROR HANDLING
             try {
                 $notificationService = app(NotificationService::class);
                 $notificationService->friendRequest($user->id, $request->user()->id);
-                \Log::info('Notification created');
+                \Log::info('Notification created successfully');
             } catch (\Exception $notificationError) {
                 \Log::error('Notification creation failed', [
                     'error' => $notificationError->getMessage(),
                     'trace' => $notificationError->getTraceAsString()
                 ]);
-                // Don't fail the whole request if notification fails
+                // Continue execution - don't fail friendship creation due to notification issues
             }
 
-            // Broadcast the friend request event
+            // Broadcast the friend request event - WITH PROPER ERROR HANDLING
             try {
                 event(new FriendRequestReceived($friendship->load('user.profile')));
-                \Log::info('Event broadcasted');
+                \Log::info('Event broadcasted successfully');
             } catch (\Exception $eventError) {
                 \Log::error('Event broadcasting failed', [
                     'error' => $eventError->getMessage(),
                     'trace' => $eventError->getTraceAsString()
                 ]);
-                // Don't fail the whole request if event fails
+                // Continue execution - don't fail friendship creation due to event issues
             }
-            */
             
-            \Log::info('Friendship request completed without notifications (temporarily disabled)');
+            \Log::info('Friendship request completed successfully with notifications');
             
         } catch (\Exception $e) {
             \Log::error('Error creating friendship request', [
@@ -184,15 +180,26 @@ class FriendshipController extends Controller
                 ]);
                 \Log::info('Friendship updated', ['new_status' => $friendship->fresh()->status]);
                 
-                // TEMPORARILY DISABLED - Notification system causing issues
-                /*
-                // Create notification for friend request sender
-                $notificationService = app(NotificationService::class);
-                $notificationService->friendAccepted($friendship->user_id, $request->user()->id);
+                // Create notification for friend request sender - WITH PROPER ERROR HANDLING
+                try {
+                    $notificationService = app(NotificationService::class);
+                    $notificationService->friendAccepted($friendship->user_id, $request->user()->id);
+                    \Log::info('Friend accepted notification created');
+                } catch (\Exception $notificationError) {
+                    \Log::error('Friend accepted notification failed', [
+                        'error' => $notificationError->getMessage()
+                    ]);
+                }
                 
-                // Broadcast the friendship status change
-                event(new FriendshipStatusChanged($friendship->fresh(), 'accepted'));
-                */
+                // Broadcast the friendship status change - WITH PROPER ERROR HANDLING
+                try {
+                    event(new FriendshipStatusChanged($friendship->fresh(), 'accepted'));
+                    \Log::info('Friendship status change event broadcasted');
+                } catch (\Exception $eventError) {
+                    \Log::error('Friendship status change event failed', [
+                        'error' => $eventError->getMessage()
+                    ]);
+                }
                 
                 $message = 'Friend request accepted successfully';
                 break;
