@@ -21,10 +21,9 @@ class PostController extends Controller
                         'likes', 
                         'comments.user.profile', 
                         'shares.user.profile',
-                        'sharedPost.user.profile',
-                        'sharedPost.likes',
-                        'sharedPost.comments',
-                        'sharedPost.shares'
+                        'sharedPost' => function($query) {
+                            $query->with(['user.profile', 'likes', 'comments', 'shares']);
+                        }
                     ])
                     ->public()
                     ->latest()
@@ -35,10 +34,27 @@ class PostController extends Controller
             if ($post->media) {
                 $post->media = $post->media_urls;
             }
+            
+            // Force load sharedPost relationship if missing
+            if ($post->is_shared && !$post->relationLoaded('sharedPost')) {
+                $post->load(['sharedPost.user.profile', 'sharedPost.likes', 'sharedPost.comments']);
+            }
+            
             // Handle shared post media
             if ($post->is_shared && $post->sharedPost && $post->sharedPost->media) {
                 $post->sharedPost->media = $post->sharedPost->media_urls;
             }
+            
+            // Debug logging for shared posts in index
+            if ($post->is_shared) {
+                \Log::info('Shared post debug in index', [
+                    'post_id' => $post->id,
+                    'shared_post_id' => $post->shared_post_id,
+                    'has_shared_post_relation' => $post->relationLoaded('sharedPost'),
+                    'shared_post_exists' => $post->sharedPost ? 'yes' : 'no'
+                ]);
+            }
+            
             return $post;
         });
 
@@ -231,10 +247,9 @@ class PostController extends Controller
                         'likes', 
                         'comments.user.profile',
                         'shares.user.profile',
-                        'sharedPost.user.profile',
-                        'sharedPost.likes',
-                        'sharedPost.comments',
-                        'sharedPost.shares'
+                        'sharedPost' => function($query) {
+                            $query->with(['user.profile', 'likes', 'comments', 'shares']);
+                        }
                     ])
                     ->where('user_id', $userId)
                     ->latest()
