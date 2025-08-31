@@ -23,7 +23,7 @@ class Share extends Model
     ];
 
     /**
-     * Get the user who shared the post.
+     * Get the user who shared the posts.
      */
     public function user()
     {

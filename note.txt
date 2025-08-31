@@ -59,3 +59,26 @@ sudo tail -f /var/log/supervisor/queue-worker.log
 # Restart if needed
 sudo supervisorctl restart reverb-worker:*
 sudo supervisorctl restart queue-worker:*
+
+
+graph TD
+    A["User clicks Share button"] --> B["ShareModal opens"]
+    B --> C["User selects 'Share to Timeline'"]
+    C --> D["User adds comment (optional)"]
+    D --> E["User selects privacy level"]
+    E --> F["POST /api/posts/{id}/share"]
+    F --> G["ShareController.sharePost()"]
+    G --> H["Create Share record"]
+    H --> I["Create Timeline Post record"]
+    I --> J["New Post with is_shared=true"]
+    J --> K["shared_post_id references original"]
+    K --> L["Timeline post appears in user's profile"]
+    L --> M["PostCard renders shared post"]
+    M --> N["Shows sharer info + original post"]
+    N --> O["Interactions target original post"]
+    
+    style A fill:#e1f5fe
+    style F fill:#fff3e0
+    style I fill:#e8f5e8
+    style L fill:#f3e5f5
+    style M fill:#ffe0e0
