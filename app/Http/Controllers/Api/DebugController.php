@@ -111,4 +111,70 @@ class DebugController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Debug pending requests for current user
+     */
+    public function debugPendingRequests(Request $request)
+    {
+        $user = $request->user();
+        
+        // Get all friendships for this user
+        $allFriendships = Friendship::where('user_id', $user->id)
+                                   ->orWhere('friend_id', $user->id)
+                                   ->with('user', 'friend')
+                                   ->get();
+        
+        // Get specifically pending requests received
+        $pendingReceived = Friendship::where('friend_id', $user->id)
+                                   ->where('status', 'pending')
+                                   ->with('user')
+                                   ->get();
+        
+        // Get specifically pending requests sent
+        $pendingSent = Friendship::where('user_id', $user->id)
+                                ->where('status', 'pending')
+                                ->with('friend')
+                                ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'all_friendships_count' => $allFriendships->count(),
+                'pending_received_count' => $pendingReceived->count(),
+                'pending_sent_count' => $pendingSent->count(),
+                'all_friendships' => $allFriendships->map(function($f) use ($user) {
+                    return [
+                        'id' => $f->id,
+                        'user_id' => $f->user_id,
+                        'friend_id' => $f->friend_id,
+                        'status' => $f->status,
+                        'direction' => $f->user_id === $user->id ? 'sent' : 'received',
+                        'other_user' => $f->user_id === $user->id ? $f->friend->name : $f->user->name,
+                        'created_at' => $f->created_at
+                    ];
+                }),
+                'pending_received' => $pendingReceived->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'from_user_id' => $f->user_id,
+                        'from_user_name' => $f->user->name,
+                        'status' => $f->status,
+                        'created_at' => $f->created_at
+                    ];
+                }),
+                'pending_sent' => $pendingSent->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'to_user_id' => $f->friend_id,
+                        'to_user_name' => $f->friend->name,
+                        'status' => $f->status,
+                        'created_at' => $f->created_at
+                    ];
+                })
+            ]
+        ]);
+    }
 }

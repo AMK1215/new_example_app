@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/debug/friendship/{targetUserId}', [App\Http\Controllers\Api\DebugController::class, 'debugFriendship']);
     Route::post('/debug/cleanup-friendships', [App\Http\Controllers\Api\DebugController::class, 'cleanupFriendships']);
     Route::post('/debug/test-friendship/{targetUserId}', [App\Http\Controllers\Api\DebugController::class, 'testCreateFriendship']);
+    Route::get('/debug/pending-requests', [App\Http\Controllers\Api\DebugController::class, 'debugPendingRequests']);
     
     // Profiles
     Route::get('/profiles', [ProfileController::class, 'index']); // Returns authenticated user's profile
