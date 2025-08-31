@@ -80,7 +80,9 @@ class NotificationService
      */
     public function friendRequest(int $userId, int $senderId): Notification
     {
-        return $this->create('friend_request', $userId, $senderId);
+        // Get the sender user as the notifiable entity
+        $sender = \App\Models\User::find($senderId);
+        return $this->create('friend_request', $userId, $senderId, $sender);
     }
 
     /**
@@ -88,7 +90,9 @@ class NotificationService
      */
     public function friendAccepted(int $userId, int $senderId): Notification
     {
-        return $this->create('friend_accepted', $userId, $senderId);
+        // Get the sender user as the notifiable entity
+        $sender = \App\Models\User::find($senderId);
+        return $this->create('friend_accepted', $userId, $senderId, $sender);
     }
 
     /**
