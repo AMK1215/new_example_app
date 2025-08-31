@@ -45,7 +45,7 @@ class PostController extends Controller
                 $post->sharedPost->media = $post->sharedPost->media_urls;
             }
             
-            // Debug logging for shared posts in index
+            // Debug logging for shared posts in index and ensure proper serialization
             if ($post->is_shared) {
                 \Log::info('Shared post debug in index', [
                     'post_id' => $post->id,
@@ -53,6 +53,11 @@ class PostController extends Controller
                     'has_shared_post_relation' => $post->relationLoaded('sharedPost'),
                     'shared_post_exists' => $post->sharedPost ? 'yes' : 'no'
                 ]);
+                
+                // Ensure the sharedPost relationship is properly accessible for JSON serialization
+                if ($post->sharedPost) {
+                    $post->setRelation('sharedPost', $post->sharedPost);
+                }
             }
             
             return $post;
@@ -271,7 +276,7 @@ class PostController extends Controller
                 $post->sharedPost->media = $post->sharedPost->media_urls;
             }
             
-            // Debug logging for shared posts
+            // Debug logging for shared posts and ensure proper serialization
             if ($post->is_shared) {
                 \Log::info('Shared post debug in userPosts', [
                     'post_id' => $post->id,
@@ -284,6 +289,11 @@ class PostController extends Controller
                         'media_count' => $post->sharedPost->media ? count($post->sharedPost->media) : 0
                     ] : null
                 ]);
+                
+                // Ensure the sharedPost relationship is properly accessible for JSON serialization
+                if ($post->sharedPost) {
+                    $post->setRelation('sharedPost', $post->sharedPost);
+                }
             }
             
             return $post;
