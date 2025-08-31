@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,15 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('shares', function (Blueprint $table) {
-            // Drop the existing unique constraint
-            $table->dropUnique(['user_id', 'post_id', 'share_type']);
-            
-            // Add new unique constraint that excludes timeline shares
-            // This allows multiple timeline shares but prevents duplicates for other types
-            $table->unique(['user_id', 'post_id', 'share_type'], 'shares_unique_non_timeline')
-                  ->where('share_type', '!=', 'timeline');
-        });
+        // Use raw SQL for PostgreSQL-specific functionality
+        DB::statement('DROP INDEX IF EXISTS shares_user_id_post_id_share_type_unique');
+        
+        // Create a partial unique index that excludes timeline shares
+        DB::statement('CREATE UNIQUE INDEX shares_unique_non_timeline 
+                       ON shares (user_id, post_id, share_type) 
+                       WHERE share_type != \'timeline\'');
     }
 
     /**
@@ -27,11 +26,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop the partial unique index
+        DB::statement('DROP INDEX IF EXISTS shares_unique_non_timeline');
+        
+        // Restore the original unique constraint
         Schema::table('shares', function (Blueprint $table) {
-            // Drop the conditional unique constraint
-            $table->dropUnique('shares_unique_non_timeline');
-            
-            // Restore the original unique constraint
             $table->unique(['user_id', 'post_id', 'share_type']);
         });
     }

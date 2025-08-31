@@ -38,8 +38,8 @@ class ShareController extends Controller
             ], 404);
         }
 
-        // For timeline shares, allow multiple shares (like Facebook)
-        // For other types, check for duplicates
+        // For non-timeline shares, check for duplicates to prevent spam
+        // Timeline shares are always allowed (like Facebook)
         if ($request->share_type !== 'timeline') {
             $existingShare = Share::where('user_id', $request->user()->id)
                                   ->where('post_id', $post->id)
@@ -49,7 +49,7 @@ class ShareController extends Controller
             if ($existingShare) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You have already shared this post'
+                    'message' => 'You have already shared this post via ' . $request->share_type
                 ], 409);
             }
         }
