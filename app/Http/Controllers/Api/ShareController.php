@@ -60,6 +60,23 @@ class ShareController extends Controller
             'privacy' => $request->privacy ?? 'public',
         ]);
 
+        // If sharing to timeline, create a new post entry
+        $timelinePost = null;
+        if ($request->share_type === 'timeline') {
+            $timelinePost = Post::create([
+                'user_id' => $request->user()->id,
+                'content' => $request->content, // User's comment when sharing
+                'type' => 'shared',
+                'is_public' => $request->privacy === 'public',
+                'is_shared' => true,
+                'shared_post_id' => $post->id,
+                'share_content' => $request->content,
+            ]);
+            
+            // Load the timeline post with relationships
+            $timelinePost->load(['user.profile', 'sharedPost.user.profile', 'sharedPost.likes', 'sharedPost.comments']);
+        }
+
         // Load the share with relationships
         $shareData = $share->load(['user.profile', 'post.user.profile']);
 
@@ -69,7 +86,10 @@ class ShareController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Post shared successfully',
-            'data' => $shareData
+            'data' => [
+                'share' => $shareData,
+                'timeline_post' => $timelinePost
+            ]
         ], 201);
     }
 

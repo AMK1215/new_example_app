@@ -16,7 +16,15 @@ class PostController extends Controller
 {
     public function index(Request $request)
     {
-        $posts = Post::with(['user.profile', 'likes', 'comments.user.profile', 'shares.user.profile'])
+        $posts = Post::with([
+                        'user.profile', 
+                        'likes', 
+                        'comments.user.profile', 
+                        'shares.user.profile',
+                        'sharedPost.user.profile',
+                        'sharedPost.likes',
+                        'sharedPost.comments'
+                    ])
                     ->public()
                     ->latest()
                     ->paginate(10);
@@ -25,6 +33,10 @@ class PostController extends Controller
         $posts->getCollection()->transform(function ($post) {
             if ($post->media) {
                 $post->media = $post->media_urls;
+            }
+            // Handle shared post media
+            if ($post->is_shared && $post->sharedPost && $post->sharedPost->media) {
+                $post->sharedPost->media = $post->sharedPost->media_urls;
             }
             return $post;
         });
@@ -213,7 +225,15 @@ class PostController extends Controller
      */
     public function userPosts(Request $request, $userId)
     {
-        $posts = Post::with(['user.profile', 'likes', 'comments.user.profile'])
+        $posts = Post::with([
+                        'user.profile', 
+                        'likes', 
+                        'comments.user.profile',
+                        'shares.user.profile',
+                        'sharedPost.user.profile',
+                        'sharedPost.likes',
+                        'sharedPost.comments'
+                    ])
                     ->where('user_id', $userId)
                     ->latest()
                     ->paginate(10);
@@ -222,6 +242,10 @@ class PostController extends Controller
         $posts->getCollection()->transform(function ($post) {
             if ($post->media) {
                 $post->media = $post->media_urls;
+            }
+            // Handle shared post media
+            if ($post->is_shared && $post->sharedPost && $post->sharedPost->media) {
+                $post->sharedPost->media = $post->sharedPost->media_urls;
             }
             return $post;
         });

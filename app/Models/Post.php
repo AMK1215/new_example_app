@@ -18,12 +18,16 @@ class Post extends Model
         'media',
         'metadata',
         'is_public',
+        'is_shared',
+        'shared_post_id',
+        'share_content',
     ];
 
     protected $casts = [
         'media' => 'array',
         'metadata' => 'array',
         'is_public' => 'boolean',
+        'is_shared' => 'boolean',
     ];
 
     public function user()
@@ -49,6 +53,16 @@ class Post extends Model
     public function shares()
     {
         return $this->hasMany(Share::class);
+    }
+
+    public function sharedPost()
+    {
+        return $this->belongsTo(Post::class, 'shared_post_id');
+    }
+
+    public function sharedBy()
+    {
+        return $this->hasMany(Post::class, 'shared_post_id');
     }
 
     public function isLikedBy($userId)
@@ -79,6 +93,16 @@ class Post extends Model
     public function scopeByUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeOriginal($query)
+    {
+        return $query->where('is_shared', false);
+    }
+
+    public function scopeShared($query)
+    {
+        return $query->where('is_shared', true);
     }
 
     /**
