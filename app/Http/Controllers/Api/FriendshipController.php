@@ -42,6 +42,11 @@ class FriendshipController extends Controller
 
     public function sendRequest(Request $request, User $user)
     {
+        \Log::info('sendRequest called', [
+            'current_user_id' => $request->user()->id,
+            'target_user_id' => $user->id
+        ]);
+
         if ($user->id === $request->user()->id) {
             return response()->json([
                 'success' => false,
@@ -57,6 +62,10 @@ class FriendshipController extends Controller
             $query->where('user_id', $user->id)
                   ->where('friend_id', $request->user()->id);
         })->first();
+
+        \Log::info('Existing friendship check', [
+            'existing_friendship' => $existingFriendship ? $existingFriendship->toArray() : null
+        ]);
 
         if ($existingFriendship) {
             if ($existingFriendship->status === 'accepted') {
@@ -84,19 +93,34 @@ class FriendshipController extends Controller
             }
         }
 
-        // Create new friendship request
-        $friendship = Friendship::create([
-            'user_id' => $request->user()->id,
-            'friend_id' => $user->id,
-            'status' => 'pending',
-        ]);
+        try {
+            // Create new friendship request
+            $friendship = Friendship::create([
+                'user_id' => $request->user()->id,
+                'friend_id' => $user->id,
+                'status' => 'pending',
+            ]);
+            \Log::info('Friendship created', ['friendship_id' => $friendship->id]);
 
-        // Create notification for friend request receiver
-        $notificationService = app(NotificationService::class);
-        $notificationService->friendRequest($user->id, $request->user()->id);
+            // Create notification for friend request receiver
+            $notificationService = app(NotificationService::class);
+            $notificationService->friendRequest($user->id, $request->user()->id);
+            \Log::info('Notification created');
 
-        // Broadcast the friend request event
-        event(new FriendRequestReceived($friendship->load('user.profile')));
+            // Broadcast the friend request event
+            event(new FriendRequestReceived($friendship->load('user.profile')));
+            \Log::info('Event broadcasted');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error creating friendship request', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create friend request: ' . $e->getMessage()
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,

@@ -72,4 +72,43 @@ class DebugController extends Controller
             'deleted_count' => $deletedCount
         ]);
     }
+
+    /**
+     * Test creating a simple friendship record
+     */
+    public function testCreateFriendship(Request $request, $targetUserId)
+    {
+        $currentUserId = $request->user()->id;
+        
+        try {
+            // First delete any existing friendship
+            Friendship::where(function($query) use ($currentUserId, $targetUserId) {
+                $query->where('user_id', $currentUserId)
+                      ->where('friend_id', $targetUserId);
+            })->orWhere(function($query) use ($currentUserId, $targetUserId) {
+                $query->where('user_id', $targetUserId)
+                      ->where('friend_id', $currentUserId);
+            })->delete();
+
+            // Create new friendship
+            $friendship = Friendship::create([
+                'user_id' => $currentUserId,
+                'friend_id' => $targetUserId,
+                'status' => 'pending',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test friendship created successfully',
+                'data' => $friendship
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 }
