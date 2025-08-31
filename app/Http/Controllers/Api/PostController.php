@@ -23,7 +23,8 @@ class PostController extends Controller
                         'shares.user.profile',
                         'sharedPost.user.profile',
                         'sharedPost.likes',
-                        'sharedPost.comments'
+                        'sharedPost.comments',
+                        'sharedPost.shares'
                     ])
                     ->public()
                     ->latest()
@@ -232,7 +233,8 @@ class PostController extends Controller
                         'shares.user.profile',
                         'sharedPost.user.profile',
                         'sharedPost.likes',
-                        'sharedPost.comments'
+                        'sharedPost.comments',
+                        'sharedPost.shares'
                     ])
                     ->where('user_id', $userId)
                     ->latest()
