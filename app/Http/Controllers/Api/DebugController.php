@@ -3,58 +3,73 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Profile;
-use App\Models\Post;
+use App\Models\User;
+use App\Models\Friendship;
 use Illuminate\Http\Request;
 
 class DebugController extends Controller
 {
     /**
-     * Debug image URLs to check if they're generating correctly
+     * Debug friendship status between users
      */
-    public function imageUrls(Request $request)
+    public function debugFriendship(Request $request, $targetUserId)
     {
-        $debug = [
-            'app_url' => config('app.url'),
-            'app_env' => config('app.env'),
-            'request_host' => $request->getHost(),
-            'request_scheme' => $request->getScheme(),
-            'profiles' => [],
-            'posts' => [],
-        ];
+        $currentUserId = $request->user()->id;
         
-        // Check profile images
-        $profiles = Profile::whereNotNull('avatar')
-                          ->orWhereNotNull('cover_photo')
-                          ->limit(5)
-                          ->get();
-        
-        foreach ($profiles as $profile) {
-            $debug['profiles'][] = [
-                'id' => $profile->id,
-                'avatar_raw' => $profile->avatar,
-                'avatar_url' => $profile->avatar_url,
-                'cover_photo_raw' => $profile->cover_photo,
-                'cover_photo_url' => $profile->cover_photo_url,
-            ];
-        }
-        
-        // Check post media
-        $posts = Post::withMedia()
-                    ->limit(5)
-                    ->get();
-        
-        foreach ($posts as $post) {
-            $debug['posts'][] = [
-                'id' => $post->id,
-                'media_raw' => $post->media,
-                'media_urls' => $post->media_urls,
-            ];
-        }
-        
+        // Find all friendship records between these users
+        $friendships = Friendship::where(function($query) use ($currentUserId, $targetUserId) {
+            $query->where('user_id', $currentUserId)
+                  ->where('friend_id', $targetUserId);
+        })->orWhere(function($query) use ($currentUserId, $targetUserId) {
+            $query->where('user_id', $targetUserId)
+                  ->where('friend_id', $currentUserId);
+        })->get();
+
         return response()->json([
             'success' => true,
-            'debug' => $debug
+            'data' => [
+                'current_user_id' => $currentUserId,
+                'target_user_id' => $targetUserId,
+                'friendships_found' => $friendships->toArray(),
+                'count' => $friendships->count(),
+            ]
+        ]);
+    }
+
+    /**
+     * Clean up invalid friendships
+     */
+    public function cleanupFriendships(Request $request)
+    {
+        $currentUserId = $request->user()->id;
+        
+        // Find duplicates or invalid friendships
+        $duplicates = Friendship::where('user_id', $currentUserId)
+            ->orWhere('friend_id', $currentUserId)
+            ->get()
+            ->groupBy(function($friendship) {
+                $userIds = [$friendship->user_id, $friendship->friend_id];
+                sort($userIds);
+                return implode('-', $userIds);
+            })
+            ->filter(function($group) {
+                return $group->count() > 1;
+            });
+
+        $deletedCount = 0;
+        foreach ($duplicates as $group) {
+            // Keep the most recent one, delete the rest
+            $toDelete = $group->sortByDesc('created_at')->slice(1);
+            foreach ($toDelete as $friendship) {
+                $friendship->delete();
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Cleaned up {$deletedCount} duplicate friendship records",
+            'deleted_count' => $deletedCount
         ]);
     }
 }
