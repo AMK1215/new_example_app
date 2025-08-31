@@ -242,4 +242,53 @@ class DebugController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Fix the notification issue and recreate the friendship
+     */
+    public function fixUsers1And2()
+    {
+        try {
+            \DB::beginTransaction();
+            
+            // Clean up any existing friendships between users 1 and 2
+            $deletedCount = Friendship::where(function($query) {
+                $query->where('user_id', 1)->where('friend_id', 2);
+            })->orWhere(function($query) {
+                $query->where('user_id', 2)->where('friend_id', 1);
+            })->delete();
+
+            // Create a clean friendship request from user 2 to user 1
+            $friendship = Friendship::create([
+                'user_id' => 2,  // sender
+                'friend_id' => 1, // receiver
+                'status' => 'pending',
+            ]);
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully fixed and recreated friendship request',
+                'data' => [
+                    'deleted_friendships' => $deletedCount,
+                    'new_friendship' => [
+                        'id' => $friendship->id,
+                        'user_id' => $friendship->user_id,
+                        'friend_id' => $friendship->friend_id,
+                        'status' => $friendship->status,
+                        'direction' => 'User 2 → User 1',
+                        'created_at' => $friendship->created_at
+                    ]
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fix friendship: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
